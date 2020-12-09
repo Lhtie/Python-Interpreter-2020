@@ -5,7 +5,6 @@
 using namespace std;
 
 class BigNumber{
-
 	friend bool operator==(const BigNumber &lhs, const BigNumber &rhs){
 		if (lhs.empty() && rhs.empty()) return true;
 		bool ret = lhs.sign == rhs.sign && lhs.digit.size() == rhs.digit.size();
@@ -17,7 +16,7 @@ class BigNumber{
 	}
 
 	friend bool operator!=(const BigNumber &lhs, const BigNumber &rhs){
-		return (lhs == rhs) ^ 1;
+		return !(lhs == rhs);
 	}
 
 	friend bool operator<(const BigNumber &lhs, const BigNumber &rhs){
@@ -128,13 +127,11 @@ class BigNumber{
 	}
 
 private:
-
 	//sign = 1 : positive & sign = 0 : negative
 	bool sign;
 	vector<int> digit;
 
 public:
-
 	BigNumber() : sign(true){
 		digit.clear();
 		digit.push_back(0);
@@ -221,6 +218,13 @@ public:
 				ret += digit[i] + '0';
 			return ret;
 		}
+	}
+
+	double put2double() const{
+        stringstream ss(this->put2string());
+        double ret;
+        ss >> ret;
+        return ret;
 	}
 
 };

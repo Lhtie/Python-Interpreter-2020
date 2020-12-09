@@ -3,9 +3,10 @@
 
 #include "BigNumber.hpp"
 #include <string>
+#include <iomanip>
 using namespace std;
 
-enum Type{INT, FLOAT, BOOL, STR, NONE};
+enum Type{INT, FLOAT, BOOL, STR, NONE, BREAK, CONTINUE, RETURN};
 
 class AnyType{
 private:
@@ -149,6 +150,10 @@ public:
         return lhs.int_type == rhs.int_type;
     }
 
+    friend bool operator==(const AnyType &lhs, Type rhs){
+        return lhs.type_name == rhs;
+    }
+
     friend bool operator>=(const AnyType &lhs, const AnyType &rhs){
         return lhs > rhs || lhs == rhs;
     }
@@ -189,9 +194,42 @@ public:
         return *this = *this & other;
     }
 
+    void put2int(){
+        if (type_name == FLOAT) *this = AnyType((int)float_type);
+        if (type_name == BOOL) *this = AnyType((int)bool_type);
+        if (type_name == STR) *this = AnyType(BigNumber(STR));
+    }
+
+    void put2float(){
+        if (type_name == INT) *this = AnyType(int_type.put2double());
+        if (type_name == BOOL) *this = AnyType((double)bool_type);
+        if (type_name == STR){
+            double ret;
+            stringstream ss(str_type); ss >> ret;
+            *this = AnyType(ret);
+        }
+    }
+
+    void put2str(){
+        if (type_name == INT) *this = AnyType(int_type.put2string());
+        if (type_name == FLOAT){
+            stringstream ss;
+            ss.precision(6);
+            ss << float_type;
+            *this = AnyType(ss.str());
+        }
+        if (type_name == BOOL) *this = AnyType(bool_type ? "True" : "False");
+    }
+
+    void put2bool(){
+        if (type_name == INT) *this = AnyType(!int_type.empty());
+        if (type_name == FLOAT) *this = AnyType((bool)float_type);
+        if (type_name == STR) *this = AnyType(!str_type.empty());
+    }
+
     friend ostream &operator<<(ostream &os, const AnyType &x){
         if (x.type_name == INT) os << x.int_type.put2string();
-        if (x.type_name == FLOAT) os << setprecision(6) << x.float_type;
+        if (x.type_name == FLOAT) os << setiosflags(ios::fixed) << setprecision(6) << x.float_type;
         if (x.type_name == BOOL) os << (x.bool_type ? "True" : "False");
         if (x.type_name == STR) os << x.str_type;
         if (x.type_name == NONE) os << "None";

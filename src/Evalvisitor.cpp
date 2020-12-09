@@ -18,7 +18,7 @@ antlrcpp::Any EvalVisitor::visitFile_input(Python3Parser::File_inputContext *ctx
 }
 
 antlrcpp::Any EvalVisitor::visitFuncdef(Python3Parser::FuncdefContext *ctx){
-
+    ctx->NAME()->getText();
 }
 
 antlrcpp::Any EvalVisitor::visitParameters(Python3Parser::ParametersContext *ctx){
@@ -36,7 +36,7 @@ antlrcpp::Any EvalVisitor::visitTfpdef(Python3Parser::TfpdefContext *ctx){
 antlrcpp::Any EvalVisitor::visitStmt(Python3Parser::StmtContext *ctx){
     if (ctx->simple_stmt())
         return visitSimple_stmt(ctx->simple_stmt());
-    else if (ctx->compound_stmt())
+    if (ctx->compound_stmt())
         return visitCompound_stmt(ctx->compound_stmt());
 }
 
@@ -96,35 +96,64 @@ antlrcpp::Any EvalVisitor::visitAugassign(Python3Parser::AugassignContext *ctx){
 }
 
 antlrcpp::Any EvalVisitor::visitFlow_stmt(Python3Parser::Flow_stmtContext *ctx){
-
+    if (ctx->break_stmt())
+        return visitBreak_stmt(ctx->break_stmt());
+    if (ctx->continue_stmt())
+        return visitContinue_stmt(ctx->continue_stmt());
+    if (ctx->return_stmt())
+        return visitReturn_stmt(ctx->return_stmt());
 }
 
 antlrcpp::Any EvalVisitor::visitBreak_stmt(Python3Parser::Break_stmtContext *ctx){
-
+    return AnyType(BREAK);
 }
 
 antlrcpp::Any EvalVisitor::visitContinue_stmt(Python3Parser::Continue_stmtContext *ctx){
-
+    return AnyType(CONTINUE);
 }
 
 antlrcpp::Any EvalVisitor::visitReturn_stmt(Python3Parser::Return_stmtContext *ctx){
-
+    return make_pair(AnyType(RETURN), visitTestlist(ctx->testlist()));
 }
 
 antlrcpp::Any EvalVisitor::visitCompound_stmt(Python3Parser::Compound_stmtContext *ctx){
-
+    if (ctx->if_stmt())
+        return visitIf_stmt(ctx->if_stmt());
+    if (ctx->while_stmt())
+        return visitWhile_stmt(ctx->while_stmt());
+    if (ctx->funcdef())
+        return visitFuncdef(ctx->funcdef());
 }
 
 antlrcpp::Any EvalVisitor::visitIf_stmt(Python3Parser::If_stmtContext *ctx){
-
+    int size_test = ctx->test().size(), size_suite = ctx->suite().size();
+    for (int i = 0; i < size_test; ++i){
+        antlrcpp::Any res = visitTest(ctx->test(i));
+        if (res.as<AnyType>() == AnyType(true))
+            return visitSuite(ctx->suite(i));
+    }
+    if (ctx->ELSE()) return visitSuite(ctx->suite(size_suite - 1));
+    return AnyType(NONE);
 }
 
 antlrcpp::Any EvalVisitor::visitWhile_stmt(Python3Parser::While_stmtContext *ctx){
-
+    while (visitTest(ctx->test()).as<AnyType>() == AnyType(true)) {
+        auto res = visitSuite(ctx->suite()).as<AnyType>();
+        if (res == BREAK) break;
+        if (res == CONTINUE) continue;
+    }
+    return AnyType(NONE);
 }
 
 antlrcpp::Any EvalVisitor::visitSuite(Python3Parser::SuiteContext *ctx){
-
+    if (ctx->simple_stmt())
+        return visitSimple_stmt(ctx->simple_stmt());
+    int size = ctx->stmt().size();
+    for (int i = 0; i < size; ++i) {
+        auto res = visitStmt(ctx->stmt(i)).as<AnyType>();
+        if (res == BREAK || res == CONTINUE) return res;
+    }
+    return AnyType(NONE);
 }
 
 antlrcpp::Any EvalVisitor::visitTest(Python3Parser::TestContext *ctx){
@@ -257,11 +286,30 @@ antlrcpp::Any EvalVisitor::visitAtom_expr(Python3Parser::Atom_exprContext *ctx){
     if (ctx->trailer()){
         antlrcpp::Any res = visitAtom(ctx->atom());
         if (res.is<string>()){
+            auto x = visitTrailer(ctx->trailer()).as<vector<antlrcpp::Any> >();
             if (res.as<string>() == "print") {
-                auto x = visitTrailer(ctx->trailer()).as<vector<antlrcpp::Any> >();
-                if (x[0].is<string>()) x[0] = vars[x[0].as<string>()];
-                cout << x[0].as<AnyType>() << endl;
+                for (int i = 0; i < x.size(); ++i) {
+                    if (x[i].is<string>()) x[i] = vars[x[i].as<string>()];
+                    cout << (i ? " " : "") << x[i].as<AnyType>();
+                }
+                cout << endl;
                 return AnyType(NONE);
+            }
+            if (res.as<string>() == "int"){
+                vars[x[0].as<string>()].put2int();
+                return x[0];
+            }
+            if (res.as<string>() == "float"){
+                vars[x[0].as<string>()].put2float();
+                return x[0];
+            }
+            if (res.as<string>() == "str"){
+                vars[x[0].as<string>()].put2str();
+                return x[0];
+            }
+            if (res.as<string>() == "bool"){
+                vars[x[0].as<string>()].put2bool();
+                return x[0];
             }
         }
     } else return visitAtom(ctx->atom());
@@ -276,7 +324,19 @@ antlrcpp::Any EvalVisitor::visitTrailer(Python3Parser::TrailerContext *ctx){
 
 antlrcpp::Any EvalVisitor::visitAtom(Python3Parser::AtomContext *ctx){
     if (ctx->NAME()) return ctx->NAME()->getText();
-    if (ctx->NUMBER()) return AnyType(BigNumber(ctx->NUMBER()->getText()));
+    if (ctx->NUMBER()){
+        bool is_float = false;
+        string context = ctx->NUMBER()->getText();
+        int len = context.length();
+        for (int i = 0; i < len; ++i)
+            is_float |= context[i] == '.';
+        if (is_float){
+            double ret;
+            stringstream ss(context);
+            ss >> ret;
+            return AnyType(ret);
+        } else return AnyType(BigNumber(ctx->NUMBER()->getText()));
+    }
     if (ctx->NONE()) return AnyType(NONE);
     if (ctx->TRUE()) return AnyType(true);
     if (ctx->FALSE()) return AnyType(false);

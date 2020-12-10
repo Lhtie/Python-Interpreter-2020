@@ -4,9 +4,7 @@
 
 #include "Python3BaseVisitor.h"
 
-
 class EvalVisitor: public Python3BaseVisitor {
-
 //todo:override all methods of Python3BaseVisitor
 	antlrcpp::Any visitFile_input(Python3Parser::File_inputContext *ctx) override;
 

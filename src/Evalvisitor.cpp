@@ -18,7 +18,6 @@ antlrcpp::Any EvalVisitor::visitFile_input(Python3Parser::File_inputContext *ctx
 }
 
 antlrcpp::Any EvalVisitor::visitFuncdef(Python3Parser::FuncdefContext *ctx){
-    ctx->NAME()->getText();
 }
 
 antlrcpp::Any EvalVisitor::visitParameters(Python3Parser::ParametersContext *ctx){

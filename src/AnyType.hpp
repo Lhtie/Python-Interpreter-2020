@@ -149,9 +149,10 @@ public:
     }
 
     friend bool operator==(AnyType lhs, AnyType rhs){
-        if (lhs.type_name == STR && rhs.type_name == STR) {
+        if (lhs.type_name == NONE || rhs.type_name == NONE)
+            return lhs.type_name == rhs.type_name;
+        if (lhs.type_name == STR && rhs.type_name == STR)
             return lhs.str_type == rhs.str_type;
-        }
         if (lhs.type_name == BOOL || rhs.type_name == BOOL){
             if (lhs.type_name != BOOL) lhs.bool_type = !lhs.int_type.empty() || lhs.float_type != 0;
             if (rhs.type_name != BOOL) rhs.bool_type = !rhs.int_type.empty() || rhs.float_type != 0;

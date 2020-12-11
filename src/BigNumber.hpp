@@ -2,6 +2,9 @@
 #define PYTHON_INTERPRETER_BIGNUMBER_HPP
 
 #include <vector>
+#include <cassert>
+#include <sstream>
+#include <algorithm>
 using namespace std;
 
 class BigNumber{

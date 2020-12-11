@@ -351,19 +351,27 @@ antlrcpp::Any EvalVisitor::visitAtom_expr(Python3Parser::Atom_exprContext *ctx){
                 return AnyType(NONE);
             }
             if (res.as<string>() == "int"){
-                data_manager[x[0].as<string>()].put2int();
+                if (x[0].is<string>())
+                    data_manager[x[0].as<string>()].put2int();
+                else x[0].as<AnyType>().put2int();
                 return x[0];
             }
             if (res.as<string>() == "float"){
-                data_manager[x[0].as<string>()].put2float();
+                if (x[0].is<string>())
+                    data_manager[x[0].as<string>()].put2float();
+                else x[0].as<AnyType>().put2float();
                 return x[0];
             }
             if (res.as<string>() == "str"){
-                data_manager[x[0].as<string>()].put2str();
+                if (x[0].is<string>())
+                    data_manager[x[0].as<string>()].put2str();
+                else x[0].as<AnyType>().put2str();
                 return x[0];
             }
             if (res.as<string>() == "bool"){
-                data_manager[x[0].as<string>()].put2bool();
+                if (x[0].is<string>())
+                    data_manager[x[0].as<string>()].put2bool();
+                else x[0].as<AnyType>().put2bool();
                 return x[0];
             }
             //else run defined function

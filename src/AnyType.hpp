@@ -17,6 +17,8 @@ private:
     string str_type;
 
 public:
+    vector<AnyType> return_type;
+
     AnyType() = default;
     AnyType(Type x) : type_name(x) {}
     AnyType(antlrcpp::Any x) : float_type(0), bool_type(false) {
@@ -25,6 +27,16 @@ public:
         if (x.is<double>()) type_name = FLOAT, float_type = x.as<double>();
         if (x.is<bool>()) type_name = BOOL, bool_type = x.as<bool>();
         if (x.is<string>()) type_name = STR, str_type = x.as<string>();
+    }
+    AnyType(Type t, antlrcpp::Any x) : type_name(t){
+        if (t == INT){
+            if (x.is<int>()) int_type = BigNumber(x.as<int>());
+            else int_type = BigNumber(x.as<BigNumber>());
+        }
+        if (t == FLOAT) float_type = x.as<double>();
+        if (t == BOOL) bool_type = x.as<bool>();
+        if (t == STR) str_type = x.as<string>();
+        if (t == RETURN) return_type = x.as<vector<AnyType> >();
     }
 
     friend AnyType operator+(AnyType lhs, AnyType rhs){
@@ -137,11 +149,14 @@ public:
     }
 
     friend bool operator==(AnyType lhs, AnyType rhs){
-        if (lhs.type_name == STR && rhs.type_name == STR){
+        if (lhs.type_name == STR && rhs.type_name == STR) {
             return lhs.str_type == rhs.str_type;
         }
-        if (lhs.type_name == BOOL) lhs.int_type = lhs.bool_type;
-        if (rhs.type_name == BOOL) rhs.int_type = rhs.bool_type;
+        if (lhs.type_name == BOOL || rhs.type_name == BOOL){
+            if (lhs.type_name != BOOL) lhs.bool_type = !lhs.int_type.empty() || lhs.float_type != 0;
+            if (rhs.type_name != BOOL) rhs.bool_type = !rhs.int_type.empty() || rhs.float_type != 0;
+            return lhs.bool_type == rhs.bool_type;
+        }
         if (lhs.type_name == FLOAT || rhs.type_name == FLOAT){
             if (lhs.type_name != FLOAT) lhs.float_type = lhs.int_type.put2double();
             if (rhs.type_name != FLOAT) rhs.float_type = rhs.int_type.put2double();

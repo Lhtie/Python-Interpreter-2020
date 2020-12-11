@@ -25,5 +25,5 @@ file(GLOB antlr4-cpp-src
         ${PROJECT_SOURCE_DIR}/third_party/runtime/src/tree/xpath/*.cpp
         )
 add_library (antlr4-cpp-runtime ${antlr4-cpp-src})
-add_executable(python_interpreter ${src_dir} src/main.cpp src/Evalvisitor.cpp)
+add_executable(code ${src_dir} src/main.cpp src/Evalvisitor.cpp)
 target_link_libraries(python_interpreter antlr4-cpp-runtime)

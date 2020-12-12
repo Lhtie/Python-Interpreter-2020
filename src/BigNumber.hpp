@@ -113,10 +113,8 @@ class BigNumber{
 		for (int i = lhs.digit.size() - 1; i >= 0; --i){
 			remains = remains * 10 + lhs.digit[i];
 			int attempt = 0;
-			for (; attempt < 10 && remains >= arhs * attempt; ++attempt) ;
-			attempt--;
+			for (; remains >= arhs; remains -= arhs, ++attempt) ;
 			cur.push_back(attempt);
-			remains -= arhs * attempt;
 		}
 		reverse(cur.begin(), cur.end());
 		while (cur.size() > 1 && *(cur.end() - 1) == 0) cur.erase(cur.end() - 1);

@@ -104,19 +104,19 @@ public:
     }
 
     friend AnyType operator|(AnyType lhs, AnyType rhs){
-        if (lhs.type_name != BOOL) lhs.bool_type = !lhs.int_type.empty() || lhs.float_type;
-        if (rhs.type_name != BOOL) rhs.bool_type = !rhs.int_type.empty() || rhs.float_type;
+        if (lhs.type_name != BOOL) lhs.bool_type = !lhs.int_type.empty() || !lhs.str_type.empty() || lhs.float_type;
+        if (rhs.type_name != BOOL) rhs.bool_type = !rhs.int_type.empty() || !rhs.str_type.empty() || rhs.float_type;
         return AnyType(lhs.bool_type || rhs.bool_type);
     }
 
     friend AnyType operator&(AnyType lhs, AnyType rhs){
-        if (lhs.type_name != BOOL) lhs.bool_type = !lhs.int_type.empty() || lhs.float_type;
-        if (rhs.type_name != BOOL) rhs.bool_type = !rhs.int_type.empty() || rhs.float_type;
+        if (lhs.type_name != BOOL) lhs.bool_type = !lhs.int_type.empty() || !lhs.str_type.empty() || lhs.float_type;
+        if (rhs.type_name != BOOL) rhs.bool_type = !rhs.int_type.empty() || !rhs.str_type.empty() || rhs.float_type;
         return AnyType(lhs.bool_type && rhs.bool_type);
     }
 
     friend AnyType operator!(AnyType x){
-        if (x.type_name != BOOL) x.bool_type = !x.int_type.empty() || x.float_type;
+        if (x.type_name != BOOL) x.bool_type = !x.int_type.empty() || !x.str_type.empty() || x.float_type;
         return AnyType(!x.bool_type);
     }
 

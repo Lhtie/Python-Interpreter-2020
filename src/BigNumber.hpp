@@ -183,15 +183,6 @@ public:
 
 	bool empty() const{return digit.size() == 1 && digit[0] == 0;}
 
-	BigNumber &operator=(const BigNumber &other){
-		if (this == &other) return *this;
-		sign = other.sign;
-		digit.clear();
-		for (int i = 0; i < other.digit.size(); ++i)
-			digit.push_back(other.digit[i]);
-		return *this;
-	}
-
 	BigNumber &operator+=(const BigNumber &other){
 		return *this = *this + other;
 	}

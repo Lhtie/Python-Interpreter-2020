@@ -135,17 +135,7 @@ public:
     }
 
     friend bool operator>(AnyType lhs, AnyType rhs){
-        if (lhs.type_name == STR && rhs.type_name == STR){
-            return lhs.str_type > rhs.str_type;
-        }
-        if (lhs.type_name == BOOL) lhs.int_type = lhs.bool_type;
-        if (rhs.type_name == BOOL) rhs.int_type = rhs.bool_type;
-        if (lhs.type_name == FLOAT || rhs.type_name == FLOAT){
-            if (lhs.type_name != FLOAT) lhs.float_type = lhs.int_type.put2double();
-            if (rhs.type_name != FLOAT) rhs.float_type = rhs.int_type.put2double();
-            return lhs.float_type > rhs.float_type;
-        }
-        return lhs.int_type > rhs.int_type;
+        return rhs < lhs;
     }
 
     friend bool operator==(AnyType lhs, AnyType rhs){

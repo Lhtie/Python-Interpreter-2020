@@ -225,9 +225,12 @@ antlrcpp::Any EvalVisitor::visitOr_test(Python3Parser::Or_testContext *ctx){
     antlrcpp::Any ret = visitAnd_test(ctx->and_test(0)), other;
     if (size == 1) return ret;
     if (ret.is<string>()) ret = data_manager[ret.as<string>()];
+    if (ret.as<AnyType>() != BOOL) ret.as<AnyType>().put2bool();
     for (int i = 1; i < size; ++i){
+    	if (ret.as<AnyType>() == AnyType(true)) break;
         other = visitAnd_test(ctx->and_test(i));
         if (other.is<string>()) other = data_manager[other.as<string>()];
+        if (other.as<AnyType>() != BOOL) other.as<AnyType>().put2bool();
         ret = ret.as<AnyType>() | other.as<AnyType>();
     }
     return ret;
@@ -238,9 +241,12 @@ antlrcpp::Any EvalVisitor::visitAnd_test(Python3Parser::And_testContext *ctx){
     antlrcpp::Any ret = visitNot_test(ctx->not_test(0)), other;
     if (size == 1) return ret;
     if (ret.is<string>()) ret = data_manager[ret.as<string>()];
+    if (ret.as<AnyType>() != BOOL) ret.as<AnyType>().put2bool();
     for (int i = 1; i < size; ++i){
+    	if (ret.as<AnyType>() == AnyType(false)) break;
         other = visitNot_test(ctx->not_test(i));
         if (other.is<string>()) other = data_manager[other.as<string>()];
+        if (other.as<AnyType>() != BOOL) other.as<AnyType>().put2bool();
         ret = ret.as<AnyType>() & other.as<AnyType>();
     }
     return ret;
@@ -259,21 +265,21 @@ antlrcpp::Any EvalVisitor::visitNot_test(Python3Parser::Not_testContext *ctx){
 antlrcpp::Any EvalVisitor::visitComparison(Python3Parser::ComparisonContext *ctx){
     int size = ctx->arith_expr().size();
     if (size == 1) return visitArith_expr(ctx->arith_expr(0));
-    vector<antlrcpp::Any> res;
-    for (int i = 0; i < size; ++i)
-        res.push_back(visitArith_expr(ctx->arith_expr(i)));
+    antlrcpp::Any prv = visitArith_expr(ctx->arith_expr(0));
+    if (prv.is<string>()) prv = data_manager[prv.as<string>()];
     AnyType ret(true);
     for (int i = 1; i < size; ++i){
-        antlrcpp::Any l = res[i-1], r = res[i];
-        if (l.is<string>()) l = data_manager[l.as<string>()];
-        if (r.is<string>()) r = data_manager[r.as<string>()];
+        antlrcpp::Any cur = visitArith_expr(ctx->arith_expr(i));
+        if (cur.is<string>()) cur = data_manager[cur.as<string>()];
         int type = visitComp_op(ctx->comp_op(i - 1)).as<int>();
-        if (type == 0) ret &= AnyType(l.as<AnyType>() < r.as<AnyType>());
-        if (type == 1) ret &= AnyType(l.as<AnyType>() > r.as<AnyType>());
-        if (type == 2) ret &= AnyType(l.as<AnyType>() == r.as<AnyType>());
-        if (type == 3) ret &= AnyType(l.as<AnyType>() >= r.as<AnyType>());
-        if (type == 4) ret &= AnyType(l.as<AnyType>() <= r.as<AnyType>());
-        if (type == 5) ret &= AnyType(l.as<AnyType>() != r.as<AnyType>());
+        if (type == 0) ret &= AnyType(prv.as<AnyType>() < cur.as<AnyType>());
+        if (type == 1) ret &= AnyType(prv.as<AnyType>() > cur.as<AnyType>());
+        if (type == 2) ret &= AnyType(prv.as<AnyType>() == cur.as<AnyType>());
+        if (type == 3) ret &= AnyType(prv.as<AnyType>() >= cur.as<AnyType>());
+        if (type == 4) ret &= AnyType(prv.as<AnyType>() <= cur.as<AnyType>());
+        if (type == 5) ret &= AnyType(prv.as<AnyType>() != cur.as<AnyType>());
+        prv = cur;
+        if (ret == AnyType(false)) break;
     }
     return ret;
 }

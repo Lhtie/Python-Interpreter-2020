@@ -153,11 +153,8 @@ public:
             return lhs.type_name == rhs.type_name;
         if (lhs.type_name == STR && rhs.type_name == STR)
             return lhs.str_type == rhs.str_type;
-        if (lhs.type_name == BOOL || rhs.type_name == BOOL){
-            if (lhs.type_name != BOOL) lhs.bool_type = !lhs.int_type.empty() || lhs.float_type != 0;
-            if (rhs.type_name != BOOL) rhs.bool_type = !rhs.int_type.empty() || rhs.float_type != 0;
-            return lhs.bool_type == rhs.bool_type;
-        }
+        if (lhs.type_name == BOOL) lhs.int_type = lhs.bool_type;
+        if (rhs.type_name == BOOL) rhs.int_type = rhs.bool_type;
         if (lhs.type_name == FLOAT || rhs.type_name == FLOAT){
             if (lhs.type_name != FLOAT) lhs.float_type = lhs.int_type.put2double();
             if (rhs.type_name != FLOAT) rhs.float_type = rhs.int_type.put2double();
@@ -180,6 +177,10 @@ public:
 
     friend bool operator!=(const AnyType &lhs, const AnyType &rhs){
         return !(lhs == rhs);
+    }
+    
+    friend bool operator!=(const AnyType &lhs, Type rhs){
+        return lhs.type_name != rhs;
     }
 
     AnyType &operator+=(const AnyType &other){

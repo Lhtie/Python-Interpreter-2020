@@ -160,6 +160,9 @@ antlrcpp::Any EvalVisitor::visitIf_stmt(Python3Parser::If_stmtContext *ctx){
     int size_test = ctx->test().size(), size_suite = ctx->suite().size();
     for (int i = 0; i < size_test; ++i){
         antlrcpp::Any res = visitTest(ctx->test(i));
+        if (res.is<string>()) res = data_manager[res.as<string>()];
+        if (res.as<AnyType>() != BOOL)
+        	res.as<AnyType>().put2bool();
         if (res.as<AnyType>() == AnyType(true)) {
             data_manager.add_layer();
             auto res = visitSuite(ctx->suite(i)).as<AnyType>();
@@ -180,6 +183,8 @@ antlrcpp::Any EvalVisitor::visitWhile_stmt(Python3Parser::While_stmtContext *ctx
     data_manager.add_layer();
     auto Judger = visitTest(ctx->test());
     if (Judger.is<string>()) Judger = data_manager[Judger.as<string>()];
+    if (Judger.as<AnyType>() != BOOL)
+        	Judger.as<AnyType>().put2bool();
     while (Judger.as<AnyType>() == AnyType(true)) {
         auto res = visitSuite(ctx->suite()).as<AnyType>();
         if (res == BREAK) break;
@@ -190,6 +195,8 @@ antlrcpp::Any EvalVisitor::visitWhile_stmt(Python3Parser::While_stmtContext *ctx
         }
         Judger = visitTest(ctx->test());
         if (Judger.is<string>()) Judger = data_manager[Judger.as<string>()];
+		if (Judger.as<AnyType>() != BOOL)
+		    Judger.as<AnyType>().put2bool();
     }
     data_manager.del_layer();
     return AnyType(NONE);

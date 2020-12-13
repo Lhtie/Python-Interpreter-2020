@@ -111,7 +111,13 @@ class BigNumber{
 		vector<int> cur;
 		BigNumber remains, arhs = abs(rhs);
 		for (int i = lhs.digit.size() - 1; i >= 0; --i){
-			remains = remains * 10 + lhs.digit[i];
+			if (remains.empty()) remains.digit[0] = lhs.digit[i];
+			else {
+				remains.digit.push_back(*(remains.digit.end() - 1));
+				for (int j = remains.digit.size() - 2; j >= 1; --j)
+					remains.digit[j] = remains.digit[j-1];
+				remains.digit[0] = lhs.digit[i];
+			}
 			int attempt = 0;
 			for (; remains >= arhs; remains -= arhs, ++attempt) ;
 			cur.push_back(attempt);

@@ -13,7 +13,7 @@ class BigNumber{
 		bool ret = lhs.sign == rhs.sign && lhs.digit.size() == rhs.digit.size();
 		if (ret){
 			for (int i = 0; i < lhs.digit.size(); ++i)
-				ret &= lhs.digit[i] == rhs.digit[i];
+				if (lhs.digit[i] != rhs.digit[i]) return false;
 		}
 		return ret;
 	}
@@ -23,19 +23,36 @@ class BigNumber{
 	}
 
 	friend bool operator<(const BigNumber &lhs, const BigNumber &rhs){
-		return lhs != rhs && (lhs - rhs).sign == false;
+		if (lhs == rhs || lhs.sign && !rhs.sign) return false;
+		if (!lhs.sign && rhs.sign) return true;
+		if (lhs.sign){
+			if (lhs.digit.size() < rhs.digit.size()) return true;
+			if (lhs.digit.size() > rhs.digit.size()) return false;
+			for (int i = lhs.digit.size() - 1; i >= 0; --i){
+				if (lhs.digit[i] < rhs.digit[i]) return true;
+				if (lhs.digit[i] > rhs.digit[i]) return false;
+			}
+		} else {
+			if (lhs.digit.size() < rhs.digit.size()) return false;
+			if (lhs.digit.size() > rhs.digit.size()) return true;
+			for (int i = lhs.digit.size() - 1; i >= 0; --i){
+				if (lhs.digit[i] < rhs.digit[i]) return false;
+				if (lhs.digit[i] > rhs.digit[i]) return true;
+			}
+		}
+		return false;
 	}
 
 	friend bool operator>(const BigNumber &lhs, const BigNumber &rhs){
-		return lhs != rhs && (lhs - rhs).sign == true;
+		return lhs != rhs && rhs < lhs;
 	}
 
 	friend bool operator<=(const BigNumber &lhs, const BigNumber &rhs){
-		return lhs == rhs || (lhs - rhs).sign == false;
+		return lhs == rhs || lhs < rhs;
 	}
 
 	friend bool operator>=(const BigNumber &lhs, const BigNumber &rhs){
-		return lhs == rhs || (lhs - rhs).sign == true;
+		return lhs == rhs || rhs < lhs;
 	}
 
 	friend BigNumber abs(BigNumber x){

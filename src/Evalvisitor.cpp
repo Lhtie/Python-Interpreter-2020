@@ -9,8 +9,9 @@
 using namespace std;
 
 Namespace data_manager;
-map<string, Python3Parser::ParametersContext *> parameters;
 map<string, Python3Parser::SuiteContext *> suites;
+map<string, vector<antlrcpp::Any> > parameters_name;
+map<string, vector<AnyType> > parameters_value;
 
 antlrcpp::Any EvalVisitor::visitFile_input(Python3Parser::File_inputContext *ctx){
     int size = ctx->stmt().size();
@@ -22,7 +23,8 @@ antlrcpp::Any EvalVisitor::visitFile_input(Python3Parser::File_inputContext *ctx
 
 antlrcpp::Any EvalVisitor::visitFuncdef(Python3Parser::FuncdefContext *ctx){
     string name = ctx->NAME()->getText();
-    parameters[name] = ctx->parameters();
+    auto parameter = visitParameters(ctx->parameters()).as<pair<vector<antlrcpp::Any>, vector<AnyType> > >();
+    parameters_name[name] = parameter.first, parameters_value[name] = parameter.second;
     suites[name] = ctx->suite();
     return AnyType(NONE);
 }
@@ -389,9 +391,8 @@ antlrcpp::Any EvalVisitor::visitAtom_expr(Python3Parser::Atom_exprContext *ctx){
             }
             //else run defined function
             string name = res.as<string>();
-            auto parameter = visitParameters(parameters[name]).as<pair<vector<antlrcpp::Any>, vector<AnyType> > >();
-            auto x_def = parameter.first;
-            auto y_def = parameter.second;
+            auto x_def = parameters_name[name];
+            auto y_def = parameters_value[name];
             map<string, AnyType> new_layer;
             for (int i = 0; i < y_def.size(); ++i) {
                 new_layer[x_def[i+x_def.size()-y_def.size()].as<string>()] = y_def[i];

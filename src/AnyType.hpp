@@ -138,11 +138,14 @@ public:
         return rhs < lhs;
     }
 
-    friend bool operator==(AnyType lhs, AnyType rhs){
+    friend bool operator==(AnyType lhs, AnyType rhs) {
         if (lhs.type_name == NONE || rhs.type_name == NONE)
             return lhs.type_name == rhs.type_name;
-        if (lhs.type_name == STR && rhs.type_name == STR)
-            return lhs.str_type == rhs.str_type;
+        if (lhs.type_name >= 3 || rhs.type_name >= 3){
+            if (lhs.type_name != rhs.type_name) return false;
+            if (lhs.type_name == STR && rhs.type_name == STR)
+                return lhs.str_type == rhs.str_type;
+        }
         if (lhs.type_name == BOOL) lhs.int_type = lhs.bool_type;
         if (rhs.type_name == BOOL) rhs.int_type = rhs.bool_type;
         if (lhs.type_name == FLOAT || rhs.type_name == FLOAT){

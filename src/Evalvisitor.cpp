@@ -6,6 +6,7 @@
 #include <map>
 #include <string>
 #include <vector>
+#include <sstream>
 using namespace std;
 
 Namespace data_manager;
@@ -436,11 +437,10 @@ antlrcpp::Any EvalVisitor::visitAtom(Python3Parser::AtomContext *ctx){
         for (int i = 0; i < len; ++i)
             is_float |= context[i] == '.';
         if (is_float){
-            double ret;
-            stringstream ss(context);
-            ss >> ret;
-            return AnyType(ret);
-        } else return AnyType(BigNumber(ctx->NUMBER()->getText()));
+            AnyType ret(context);
+            ret.put2float();
+            return ret;
+        } else return AnyType(BigNumber(context));
     }
     if (ctx->NONE()) return AnyType(NONE);
     if (ctx->TRUE()) return AnyType(true);

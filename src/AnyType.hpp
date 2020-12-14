@@ -202,28 +202,45 @@ public:
     }
 
     void put2int(){
-        if (type_name == FLOAT) *this = AnyType((int)float_type);
+        if (type_name == FLOAT) *this = AnyType((long long)float_type);
         if (type_name == BOOL) *this = AnyType((int)bool_type);
-        if (type_name == STR) *this = AnyType(BigNumber(STR));
+        if (type_name == STR) *this = AnyType(BigNumber(str_type));
     }
 
     void put2float(){
         if (type_name == INT) *this = AnyType(int_type.put2double());
         if (type_name == BOOL) *this = AnyType((double)bool_type);
         if (type_name == STR){
-            double ret;
-            stringstream ss(str_type); ss >> ret;
-            *this = AnyType(ret);
+            string context = str_type;
+            int len = context.length();
+            double prv = 0, suf = 0;
+            for (int i = (context[0] =='-' ? 1 : 0); context[i] != '.'; ++i)
+                prv = prv * 10 + context[i] - '0';
+            for (int i = len - 1; context[i] != '.'; --i)
+                suf = suf / 10 + context[i] - '0';
+            *this = AnyType((context[0] == '-' ? -1. : 1.) * (prv + suf / 10));
         }
     }
 
     void put2str(){
         if (type_name == INT) *this = AnyType(int_type.put2string());
         if (type_name == FLOAT){
-            stringstream ss;
-            ss.precision(6);
-            ss << float_type;
-            *this = AnyType(ss.str());
+            double cur = abs(float_type);
+            string ret;
+            long long prv = cur;
+            double suf = cur - prv, eps = 1e-7;
+            for (; prv; prv /= 10)
+                ret = char(prv % 10 + '0') + ret;
+            ret += '.';
+            int precision = 1;
+            for (suf *= 10; abs(suf) > eps && precision <= 6; ++precision) {
+                long long tmp = suf;
+                ret += char(tmp + '0');
+                suf = (suf - tmp) * 10;
+            }
+            for (; precision <= 6; ++precision) ret = ret + '0';
+            if (float_type < 0) ret = '-' + ret;
+            *this = AnyType(ret);
         }
         if (type_name == BOOL) *this = AnyType(bool_type ? "True" : "False");
     }

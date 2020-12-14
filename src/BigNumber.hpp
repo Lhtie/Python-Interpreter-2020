@@ -174,7 +174,7 @@ public:
 			else if (str[i] == '-') sign = false;
 	}
 
-	BigNumber(int num) : sign(num >= 0){
+	BigNumber(long long num) : sign(num >= 0){
 		digit.clear();
 		if (!num) digit.push_back(0);
 		for (num = abs(num); num; num /= 10) 
@@ -236,10 +236,11 @@ public:
 	}
 
 	double put2double() const{
-        stringstream ss(this->put2string());
-        double ret;
-        ss >> ret;
-        return ret;
+	    double ret = 0;
+	    for (int i = (int)digit.size() - 1; i >= 0; --i)
+	        ret = ret * 10 + digit[i];
+	    if (!sign) ret *= -1;
+	    return ret;
 	}
 
 };

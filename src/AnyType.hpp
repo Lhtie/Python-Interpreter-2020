@@ -250,7 +250,7 @@ public:
             if (float_type < 0) ret = '-' + ret;
             *this = AnyType(ret);
         }
-        if (type_name == BOOL) *this = AnyType(bool_type ? "True" : "False");
+        if (type_name == BOOL) *this = AnyType(bool_type ? string("True") : string("False"));
     }
 
     void put2bool(){

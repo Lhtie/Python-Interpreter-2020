@@ -324,7 +324,7 @@ antlrcpp::Any EvalVisitor::visitTerm(Python3Parser::TermContext *ctx){
     for (int i = 1; i < size; ++i){
         antlrcpp::Any other = visitFactor(ctx->factor(i));
         if (other.is<string>()) other = data_manager[other.as<string>()];
-        int type = visitMuldivmod_op(ctx->muldivmod_op(i-1)).as<int>();
+        int type = visitMuldivmod_op(ctx->muldivmod_op(i - 1)).as<int>();
         if (type == 0) ret = ret.as<AnyType>() * other.as<AnyType>();
         if (type == 1) ret = ret.as<AnyType>() / other.as<AnyType>();
         if (type == 2) ret = div(ret.as<AnyType>(), other.as<AnyType>());

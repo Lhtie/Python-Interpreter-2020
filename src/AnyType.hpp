@@ -138,7 +138,7 @@ public:
         return rhs < lhs;
     }
 
-    friend bool operator==(AnyType lhs, AnyType rhs) {
+    friend bool operator==(AnyType lhs, AnyType rhs){
         if (lhs.type_name >= 3 || rhs.type_name >= 3){
             if (lhs.type_name != rhs.type_name) return false;
             if (lhs.type_name == STR && rhs.type_name == STR)
@@ -216,10 +216,16 @@ public:
             string context = str_type;
             int len = context.length();
             double prv = 0, suf = 0;
-            for (int i = (context[0] =='-' ? 1 : 0); context[i] != '.'; ++i)
+            bool have_dot = false;
+            for (int i = 0; i < len; ++i){
+            	if (context[i] == '.') {have_dot = true; break;}
+            }
+            for (int i = (context[0] =='-' ? 1 : 0); i < len && context[i] != '.'; ++i)
                 prv = prv * 10 + context[i] - '0';
-            for (int i = len - 1; context[i] != '.'; --i)
-                suf = suf / 10 + context[i] - '0';
+            if (have_dot){
+		        for (int i = len - 1; context[i] != '.'; --i)
+		            suf = suf / 10 + context[i] - '0';
+			}
             *this = AnyType((context[0] == '-' ? -1. : 1.) * (prv + suf / 10));
         }
     }
@@ -230,13 +236,13 @@ public:
             double cur = abs(float_type);
             string ret;
             long long prv = cur;
-            double suf = cur - prv, eps = 1e-7;
+            double suf = cur - prv, eps = 1e-8;
             for (; prv; prv /= 10)
                 ret = char(prv % 10 + '0') + ret;
             ret += '.';
             int precision = 1;
             for (suf *= 10; abs(suf) > eps && precision <= 6; ++precision) {
-                long long tmp = suf;
+                long long tmp = suf + eps;
                 ret += char(tmp + '0');
                 suf = (suf - tmp) * 10;
             }

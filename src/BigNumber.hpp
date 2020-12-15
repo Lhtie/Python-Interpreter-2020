@@ -120,6 +120,7 @@ class BigNumber{
 				cur[i] %= 10;
 			}
 		}
+		while (cur.size() > 1 && *(cur.end() - 1) == 0) cur.erase(cur.end() - 1);
 		return BigNumber(lhs.sign ^ rhs.sign ^ 1, cur);
 	}
 

@@ -24,6 +24,7 @@ public:
     AnyType(antlrcpp::Any x) : float_type(0), bool_type(false) {
         if (x.is<BigNumber>()) type_name = INT, int_type = x.as<BigNumber>();
         if (x.is<int>()) type_name = INT, int_type = x.as<int>();
+        if (x.is<long long>()) type_name = INT, int_type = x.as<long long>();
         if (x.is<double>()) type_name = FLOAT, float_type = x.as<double>();
         if (x.is<bool>()) type_name = BOOL, bool_type = x.as<bool>();
         if (x.is<string>()) type_name = STR, str_type = x.as<string>();
@@ -31,6 +32,7 @@ public:
     AnyType(Type t, antlrcpp::Any x) : type_name(t){
         if (t == INT){
             if (x.is<int>()) int_type = BigNumber(x.as<int>());
+            else if (x.is<long long>()) int_type = x.as<long long>();
             else int_type = BigNumber(x.as<BigNumber>());
         }
         if (t == FLOAT) float_type = x.as<double>();

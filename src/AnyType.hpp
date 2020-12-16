@@ -21,7 +21,7 @@ public:
 
     AnyType() = default;
     AnyType(Type x) : type_name(x) {}
-    AnyType(antlrcpp::Any x) : float_type(0), bool_type(false) {
+    AnyType(const antlrcpp::Any &x) : float_type(0), bool_type(false) {
         if (x.is<BigNumber>()) type_name = INT, int_type = x.as<BigNumber>();
         if (x.is<int>()) type_name = INT, int_type = x.as<int>();
         if (x.is<long long>()) type_name = INT, int_type = x.as<long long>();
@@ -29,7 +29,7 @@ public:
         if (x.is<bool>()) type_name = BOOL, bool_type = x.as<bool>();
         if (x.is<string>()) type_name = STR, str_type = x.as<string>();
     }
-    AnyType(Type t, antlrcpp::Any x) : type_name(t){
+    AnyType(Type t, const antlrcpp::Any &x) : type_name(t){
         if (t == INT){
             if (x.is<int>()) int_type = BigNumber(x.as<int>());
             else if (x.is<long long>()) int_type = x.as<long long>();
@@ -41,7 +41,7 @@ public:
         if (t == RETURN) return_type = x.as<vector<AnyType> >();
     }
 
-    friend AnyType operator+(AnyType lhs, AnyType rhs){
+    friend AnyType operator+(AnyType &lhs, AnyType &rhs){
         if (lhs.type_name == STR && rhs.type_name == STR){
             return AnyType(lhs.str_type + rhs.str_type);
         }
@@ -55,7 +55,7 @@ public:
         return AnyType(lhs.int_type + rhs.int_type);
     }
 
-    friend AnyType operator-(AnyType lhs, AnyType rhs){
+    friend AnyType operator-(AnyType &lhs, AnyType &rhs){
         if (lhs.type_name == BOOL) lhs.int_type = lhs.bool_type;
         if (rhs.type_name == BOOL) rhs.int_type = rhs.bool_type;
         if (lhs.type_name == FLOAT || rhs.type_name == FLOAT){
@@ -66,7 +66,7 @@ public:
         return AnyType(lhs.int_type - rhs.int_type);
     }
 
-    friend AnyType operator*(AnyType lhs, AnyType rhs){
+    friend AnyType operator*(AnyType &lhs, AnyType &rhs){
         if (lhs.type_name == STR || rhs.type_name == STR){
             if (rhs.type_name == STR) swap(lhs, rhs);
             if (rhs.type_name == BOOL) rhs.int_type = rhs.bool_type;
@@ -85,7 +85,7 @@ public:
         return AnyType(lhs.int_type * rhs.int_type);
     }
 
-    friend AnyType operator/(AnyType lhs, AnyType rhs){
+    friend AnyType operator/(AnyType &lhs, AnyType &rhs){
         if (lhs.type_name == BOOL) lhs.int_type = lhs.bool_type;
         if (rhs.type_name == BOOL) rhs.int_type = rhs.bool_type;
         if (lhs.type_name != FLOAT) lhs.float_type = lhs.int_type.put2double();
@@ -93,36 +93,36 @@ public:
         return AnyType(lhs.float_type / rhs.float_type);
     }
 
-    friend AnyType div(AnyType lhs, AnyType rhs){
+    friend AnyType div(AnyType &lhs, AnyType &rhs){
         if (lhs.type_name == BOOL) lhs.int_type = lhs.bool_type;
         if (rhs.type_name == BOOL) rhs.int_type = rhs.bool_type;
         return AnyType(lhs.int_type / rhs.int_type);
     }
 
-    friend AnyType operator%(AnyType lhs, AnyType rhs){
+    friend AnyType operator%(AnyType &lhs, AnyType &rhs){
         if (lhs.type_name == BOOL) lhs.int_type = lhs.bool_type;
         if (rhs.type_name == BOOL) rhs.int_type = rhs.bool_type;
         return AnyType(lhs.int_type % rhs.int_type);
     }
 
-    friend AnyType operator|(AnyType lhs, AnyType rhs){
+    friend AnyType operator|(AnyType &lhs, AnyType &rhs){
         if (lhs.type_name != BOOL) lhs.bool_type = !lhs.int_type.empty() || !lhs.str_type.empty() || lhs.float_type;
         if (rhs.type_name != BOOL) rhs.bool_type = !rhs.int_type.empty() || !rhs.str_type.empty() || rhs.float_type;
         return AnyType(lhs.bool_type || rhs.bool_type);
     }
 
-    friend AnyType operator&(AnyType lhs, AnyType rhs){
+    friend AnyType operator&(AnyType &lhs, AnyType &rhs){
         if (lhs.type_name != BOOL) lhs.bool_type = !lhs.int_type.empty() || !lhs.str_type.empty() || lhs.float_type;
         if (rhs.type_name != BOOL) rhs.bool_type = !rhs.int_type.empty() || !rhs.str_type.empty() || rhs.float_type;
         return AnyType(lhs.bool_type && rhs.bool_type);
     }
 
-    friend AnyType operator!(AnyType x){
+    friend AnyType operator!(AnyType &x){
         if (x.type_name != BOOL) x.bool_type = !x.int_type.empty() || !x.str_type.empty() || x.float_type;
         return AnyType(!x.bool_type);
     }
 
-    friend bool operator<(AnyType lhs, AnyType rhs){
+    friend bool operator<(AnyType &lhs, AnyType &rhs){
         if (lhs.type_name == STR && rhs.type_name == STR){
             return lhs.str_type < rhs.str_type;
         }
@@ -136,11 +136,11 @@ public:
         return lhs.int_type < rhs.int_type;
     }
 
-    friend bool operator>(AnyType lhs, AnyType rhs){
+    friend bool operator>(AnyType &lhs, AnyType &rhs){
         return rhs < lhs;
     }
 
-    friend bool operator==(AnyType lhs, AnyType rhs){
+    friend bool operator==(AnyType &lhs, AnyType &rhs){
         if (lhs.type_name >= 3 || rhs.type_name >= 3){
             if (lhs.type_name != rhs.type_name) return false;
             if (lhs.type_name == STR && rhs.type_name == STR)
@@ -161,47 +161,47 @@ public:
         return lhs.type_name == rhs;
     }
 
-    friend bool operator>=(const AnyType &lhs, const AnyType &rhs){
+    friend bool operator>=(AnyType &lhs, AnyType &rhs){
         return lhs > rhs || lhs == rhs;
     }
 
-    friend bool operator<=(const AnyType &lhs, const AnyType &rhs){
+    friend bool operator<=(AnyType &lhs, AnyType &rhs){
         return lhs < rhs || lhs == rhs;
     }
 
-    friend bool operator!=(const AnyType &lhs, const AnyType &rhs){
+    friend bool operator!=(AnyType &lhs, AnyType &rhs){
         return !(lhs == rhs);
     }
     
-    friend bool operator!=(const AnyType &lhs, Type rhs){
+    friend bool operator!=(AnyType &lhs, Type rhs){
         return lhs.type_name != rhs;
     }
 
-    AnyType &operator+=(const AnyType &other){
+    AnyType &operator+=(AnyType &other){
         return *this = *this + other;
     }
 
-    AnyType &operator-=(const AnyType &other){
+    AnyType &operator-=(AnyType &other){
         return *this = *this - other;
     }
 
-    AnyType &operator*=(const AnyType &other){
+    AnyType &operator*=(AnyType &other){
         return *this = *this * other;
     }
 
-    AnyType &operator/=(const AnyType &other){
+    AnyType &operator/=(AnyType &other){
         return *this = *this / other;
     }
 
-    AnyType &operator%=(const AnyType &other){
+    AnyType &operator%=(AnyType &other){
         return *this = *this % other;
     }
 
-    AnyType &operator|=(const AnyType &other){
+    AnyType &operator|=(AnyType &other){
         return *this = *this | other;
     }
 
-    AnyType &operator&=(const AnyType &other){
+    AnyType &operator&=(AnyType &other){
         return *this = *this & other;
     }
 

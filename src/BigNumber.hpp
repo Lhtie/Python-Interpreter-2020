@@ -173,6 +173,8 @@ public:
 		for (int i = len - 1; i >= 0; --i)
 			if (isdigit(str[i])) digit.push_back(str[i] - '0');
 			else if (str[i] == '-') sign = false;
+        while (digit.size() > 1 && *(digit.end() - 1) == 0)
+            digit.erase(digit.end() - 1);
 	}
 
 	BigNumber(long long num) : sign(num >= 0){
@@ -225,7 +227,7 @@ public:
 	}
 
 	string put2string() const{
-		if (digit.empty()){
+		if (empty()){
 			return "0";
 		} else {
 			string ret;

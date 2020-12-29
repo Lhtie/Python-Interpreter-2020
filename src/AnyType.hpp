@@ -31,9 +31,9 @@ public:
     }
     AnyType(Type t, const antlrcpp::Any &x) : type_name(t){
         if (t == INT){
-            if (x.is<int>()) int_type = BigNumber(x.as<int>());
+            if (x.is<int>()) int_type = x.as<int>();
             else if (x.is<long long>()) int_type = x.as<long long>();
-            else int_type = BigNumber(x.as<BigNumber>());
+            else int_type = x.as<BigNumber>();
         }
         if (t == FLOAT) float_type = x.as<double>();
         if (t == BOOL) bool_type = x.as<bool>();

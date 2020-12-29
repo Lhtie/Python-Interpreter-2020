@@ -168,7 +168,7 @@ public:
 			digit.push_back(digit_[i]);
 	}
 
-	BigNumber(string str) : sign(true){
+	BigNumber(const string &str) : sign(true){
 		int len = str.length();
 		for (int i = len - 1; i >= 0; --i)
 			if (isdigit(str[i])) digit.push_back(str[i] - '0');

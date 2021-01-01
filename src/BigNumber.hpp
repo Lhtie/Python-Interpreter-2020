@@ -10,12 +10,11 @@ using namespace std;
 class BigNumber{
 	friend bool operator==(const BigNumber &lhs, const BigNumber &rhs){
 		if (lhs.empty() && rhs.empty()) return true;
-		bool ret = lhs.sign == rhs.sign && lhs.digit.size() == rhs.digit.size();
-		if (ret){
+		if (lhs.sign == rhs.sign && lhs.digit.size() == rhs.digit.size()){
 			for (int i = 0; i < lhs.digit.size(); ++i)
 				if (lhs.digit[i] != rhs.digit[i]) return false;
-		}
-		return ret;
+			return true;
+		} else return false;
 	}
 
 	friend bool operator!=(const BigNumber &lhs, const BigNumber &rhs){
@@ -25,17 +24,18 @@ class BigNumber{
 	friend bool operator<(const BigNumber &lhs, const BigNumber &rhs){
 		if (lhs == rhs || lhs.sign && !rhs.sign) return false;
 		if (!lhs.sign && rhs.sign) return true;
+		int ls = lhs.digit.size(), rs = rhs.digit.size();
 		if (lhs.sign){
-			if (lhs.digit.size() < rhs.digit.size()) return true;
-			if (lhs.digit.size() > rhs.digit.size()) return false;
-			for (int i = lhs.digit.size() - 1; i >= 0; --i){
+			if (ls < rs) return true;
+			if (ls > rs) return false;
+			for (int i = ls - 1; i >= 0; --i){
 				if (lhs.digit[i] < rhs.digit[i]) return true;
 				if (lhs.digit[i] > rhs.digit[i]) return false;
 			}
 		} else {
-			if (lhs.digit.size() < rhs.digit.size()) return false;
-			if (lhs.digit.size() > rhs.digit.size()) return true;
-			for (int i = lhs.digit.size() - 1; i >= 0; --i){
+			if (ls < rs) return false;
+			if (ls > rs) return true;
+			for (int i = ls - 1; i >= 0; --i){
 				if (lhs.digit[i] < rhs.digit[i]) return false;
 				if (lhs.digit[i] > rhs.digit[i]) return true;
 			}
@@ -44,7 +44,7 @@ class BigNumber{
 	}
 
 	friend bool operator>(const BigNumber &lhs, const BigNumber &rhs){
-		return lhs != rhs && rhs < lhs;
+		return rhs < lhs;
 	}
 
 	friend bool operator<=(const BigNumber &lhs, const BigNumber &rhs){
@@ -52,12 +52,11 @@ class BigNumber{
 	}
 
 	friend bool operator>=(const BigNumber &lhs, const BigNumber &rhs){
-		return lhs == rhs || rhs < lhs;
+		return lhs == rhs || lhs > rhs;
 	}
 
-	friend BigNumber abs(BigNumber x){
-		x.sign = true;
-		return x;
+	friend BigNumber abs(const BigNumber &x){
+		return BigNumber(true, x.digit);
 	}
 
 	friend BigNumber operator+(const BigNumber &lhs, const BigNumber &rhs){
@@ -83,27 +82,24 @@ class BigNumber{
 				cur[i] += carrier * 10;
 			}
 		}
-		if (cur.size() > 0 && *(cur.end() - 1) < 0){
-			for (int i = 0; i < cur.size(); ++i)
-				cur[i] *= -1;
-			for (int i = 0; i < cur.size() - 1; ++i){
-				if (cur[i] < 0){
+		int sign_ = true;
+		if (*(cur.end() - 1) < 0) {
+			for (auto &iter : cur) iter *= -1;
+			for (int i = 0; i < cur.size() - 1; ++i) {
+				if (cur[i] < 0) {
 					int carrier = (-cur[i] - 1) / 10 + 1;
-					cur[i+1] -= carrier;
+					cur[i + 1] -= carrier;
 					cur[i] += carrier * 10;
 				}
 			}
-			while (cur.size() > 1 && *(cur.end() - 1) == 0) cur.erase(cur.end() - 1);
-			return BigNumber(false, cur);
-		} else {
-			while (cur.size() > 1 && *(cur.end() - 1) == 0) cur.erase(cur.end() - 1);
-			return BigNumber(true, cur);
+			sign_ = false;
 		}
+		while (cur.size() > 1 && *(cur.end() - 1) == 0) cur.erase(cur.end() - 1);
+		return BigNumber(sign_, cur);
 	}
 
-	friend BigNumber operator-(const BigNumber &lhs, BigNumber rhs){
-		rhs.sign ^= 1;
-		return lhs + rhs;
+	friend BigNumber operator-(const BigNumber &lhs, const BigNumber &rhs){
+		return lhs + BigNumber(!rhs.sign, rhs.digit);
 	}
 
 	friend BigNumber operator*(const BigNumber &lhs, const BigNumber &rhs){
@@ -121,18 +117,18 @@ class BigNumber{
 			}
 		}
 		while (cur.size() > 1 && *(cur.end() - 1) == 0) cur.erase(cur.end() - 1);
-		return BigNumber(lhs.sign ^ rhs.sign ^ 1, cur);
+		return BigNumber(!(lhs.sign ^ rhs.sign), cur);
 	}
 
 	friend BigNumber operator/(const BigNumber &lhs, const BigNumber &rhs){
 		assert(!rhs.empty());
 		vector<int> cur;
 		BigNumber remains, arhs = abs(rhs);
-		for (int i = lhs.digit.size() - 1; i >= 0; --i){
+		for (int i = (int)lhs.digit.size() - 1; i >= 0; --i){
 			if (remains.empty()) remains.digit[0] = lhs.digit[i];
 			else {
 				remains.digit.push_back(*(remains.digit.end() - 1));
-				for (int j = remains.digit.size() - 2; j >= 1; --j)
+				for (int j = (int)remains.digit.size() - 2; j >= 1; --j)
 					remains.digit[j] = remains.digit[j-1];
 				remains.digit[0] = lhs.digit[i];
 			}
@@ -142,9 +138,10 @@ class BigNumber{
 		}
 		reverse(cur.begin(), cur.end());
 		while (cur.size() > 1 && *(cur.end() - 1) == 0) cur.erase(cur.end() - 1);
-		if ((lhs.sign ^ rhs.sign ^ 1) == false && !remains.empty())
-			return BigNumber(lhs.sign ^ rhs.sign ^ 1, cur) - 1;
-		else return BigNumber(lhs.sign ^ rhs.sign ^ 1, cur);
+		int sign_ = !(lhs.sign ^ rhs.sign);
+		if (!sign_ && !remains.empty())
+			return BigNumber(sign_, cur) - 1;
+		else return BigNumber(sign_, cur);
 	}
 
 	friend BigNumber operator%(const BigNumber &lhs, const BigNumber &rhs){
@@ -162,13 +159,9 @@ public:
 		digit.push_back(0);
 	}
 
-	BigNumber(bool sign_, const vector<int> &digit_) : sign(sign_){
-		digit.clear();
-		for (int i = 0; i < digit_.size(); ++i)
-			digit.push_back(digit_[i]);
-	}
+	BigNumber(bool sign_, const vector<int> &digit_) : sign(sign_), digit(digit_) {}
 
-	BigNumber(const string &str) : sign(true){
+	explicit BigNumber(const string &str) : sign(true){
 		int len = str.length();
 		for (int i = len - 1; i >= 0; --i)
 			if (isdigit(str[i])) digit.push_back(str[i] - '0');
@@ -210,7 +203,7 @@ public:
 		return *this += 1;
 	}
 
-	BigNumber operator++(int x){
+	BigNumber operator++(int){
 		BigNumber tmp = *this;
 		*this = *this + 1;
 		return tmp;
@@ -220,25 +213,25 @@ public:
 		return *this -= 1;
 	}
 
-	BigNumber operator--(int x){
+	BigNumber operator--(int){
 		BigNumber tmp = *this;
-		*this = *this + 1;
+		*this = *this - 1;
 		return tmp;
 	}
 
-	string put2string() const{
+	explicit operator string() const{
 		if (empty()){
 			return "0";
 		} else {
 			string ret;
 			if (!sign) ret += '-';
 			for (int i = (int)digit.size() - 1; i >= 0; --i)
-				ret += digit[i] + '0';
+				ret += char(digit[i] + '0');
 			return ret;
 		}
 	}
 
-	double put2double() const{
+	explicit operator double() const{
 	    double ret = 0;
 	    for (int i = (int)digit.size() - 1; i >= 0; --i)
 	        ret = ret * 10 + digit[i];

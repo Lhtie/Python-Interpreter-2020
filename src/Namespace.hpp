@@ -37,9 +37,9 @@ public:
     }
 
     void del_layer(){
-        int cur = type.size() - 1;
+        int cur = (int)type.size() - 1;
         if (!type[cur]){
-            for (auto iter : stack[cur])
+            for (auto &iter : stack[cur])
                 if (stack[cur-1].find(iter.first) != stack[cur-1].end())
                     stack[cur-1][iter.first] = iter.second;
         }

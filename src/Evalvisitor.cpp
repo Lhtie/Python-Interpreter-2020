@@ -137,8 +137,8 @@ antlrcpp::Any EvalVisitor::visitReturn_stmt(Python3Parser::Return_stmtContext *c
             if (iter.is<string>()) iter = data_manager[iter.as<string>()];
             ret.push_back(iter.as<AnyType>());
         }
-        return AnyType(RETURN, ret);
-    } else return AnyType(RETURN, vector<AnyType>());
+        return AnyType(ret);
+    } else return AnyType(vector<AnyType>());
 }
 
 antlrcpp::Any EvalVisitor::visitCompound_stmt(Python3Parser::Compound_stmtContext *ctx){
@@ -152,18 +152,18 @@ antlrcpp::Any EvalVisitor::visitCompound_stmt(Python3Parser::Compound_stmtContex
 antlrcpp::Any EvalVisitor::visitIf_stmt(Python3Parser::If_stmtContext *ctx){
     int size_test = ctx->test().size(), size_suite = ctx->suite().size();
     for (int i = 0; i < size_test; ++i){
-        auto res = visitTest(ctx->test(i));
-        if (res.is<string>()) res = data_manager[res.as<string>()];
-        if (res.as<AnyType>()){
-            data_manager.add_layer();
-            auto ret = visitSuite(ctx->suite(i)).as<AnyType>();
-            data_manager.del_layer();
-            return ret;
-        }
-    }
-    if (ctx->ELSE()){
-        data_manager.add_layer();
-        auto res = visitSuite(ctx->suite(size_suite - 1)).as<AnyType>();
+		auto res = visitTest(ctx->test(i));
+		if (res.is<string>()) res = data_manager[res.as<string>()];
+		if (res.as<AnyType>()){
+			data_manager.add_layer();
+			auto ret = visitSuite(ctx->suite(i)).as<AnyType>();
+			data_manager.del_layer();
+			return ret;
+		}
+	}
+	if (ctx->ELSE()){
+		data_manager.add_layer();
+		auto res = visitSuite(ctx->suite(size_suite - 1)).as<AnyType>();
         data_manager.del_layer();
         return res;
     }

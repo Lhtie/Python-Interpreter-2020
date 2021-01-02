@@ -56,17 +56,17 @@ private:
         int size = stack1.size(), j = stack0.size() - 1;
         for (int i = size - 1; i >= 0; --i, --j){
             if (stack0[j] != 1) break;
-            if (stack1[i].find(name) != stack1[i].end())
-                return stack1[i][name];
+            auto res = stack1[i].find(name);
+            if (res != stack1[i].end()) return res->second;
         }
         if (stack0[j] == 2){
             int size = stack2.size();
-            if (stack2[size-1].find(name) != stack2[size-1].end())
-                return stack2[size-1][name];
+            auto res = stack2[size-1].find(name);
+            if (res != stack2[size-1].end()) return res->second;
         }
-        if (global.find(name) != global.end())
-            return global[name];
-        else return stack1[size-1][name];
+		auto res = global.find(name);
+		if (res != global.end()) return res->second;
+		else return stack1[size-1][name];
     }
 
     void add_layer1(){
@@ -87,10 +87,10 @@ private:
 
     AnyType &get_stack2(const string &name){
         int size = stack2.size();
-        if (stack2[size-1].find(name) != stack2[size-1].end())
-            return stack2[size-1][name];
-        if (global.find(name) != global.end())
-            return global[name];
+        auto res = stack2[size-1].find(name);
+        if (res != stack2[size-1].end()) return res->second;
+		res = global.find(name);
+		if (res != global.end()) return res->second;
         return stack2[size-1][name];
     }
 

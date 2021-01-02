@@ -9,7 +9,6 @@ using namespace std;
 
 class AnyType;
 enum Type{INT, FLOAT, BOOL, STR, NONE, BREAK, CONTINUE, RETURN};
-const double eps = 1e-8;
 
 class AnyType{
 	friend AnyType operator+(const AnyType &lhs, const AnyType &rhs){
@@ -30,7 +29,7 @@ class AnyType{
 	}
 
 	friend AnyType operator-(const AnyType &x){
-		return AnyType(0) - x;
+		return x * AnyType(-1);
 	}
 
 	friend AnyType operator*(const AnyType &lhs, const AnyType &rhs){
@@ -107,7 +106,7 @@ class AnyType{
 		}
 		AnyType l = lhs, r = rhs;
 		convert(l, r);
-		if (l.type_name == FLOAT) return AnyType(fabs(l.float_type - r.float_type) < eps);
+		if (l.type_name == FLOAT) return AnyType(l.float_type == r.float_type);
 		return AnyType(l.int_type == r.int_type);
 	}
 
@@ -150,18 +149,13 @@ public:
     vector<AnyType> return_type;
 
     explicit AnyType(Type x = NONE) : type_name(x) {}
-    explicit AnyType(const antlrcpp::Any &x){
-        if (x.is<BigNumber>()) type_name = INT, int_type = x.as<BigNumber>();
-        if (x.is<int>()) type_name = INT, int_type = x.as<int>();
-        if (x.is<long long>()) type_name = INT, int_type = x.as<long long>();
-        if (x.is<double>()) type_name = FLOAT, float_type = x.as<double>();
-        if (x.is<bool>()) type_name = BOOL, bool_type = x.as<bool>();
-        if (x.is<string>()) type_name = STR, str_type = x.as<string>();
-        if (x.is<vector<AnyType> >()) type_name = RETURN, return_type = x.as<vector<AnyType> >();
-    }
-    AnyType(Type t, const antlrcpp::Any &x) : AnyType(x) {
-    	type_name = t;
-    }
+    explicit AnyType(const BigNumber &x) : type_name(INT), int_type(x) {}
+    explicit AnyType(int x) : type_name(INT), int_type(x) {}
+    explicit AnyType(long long x) : type_name(INT), int_type(x) {}
+    explicit AnyType(double x) : type_name(FLOAT), float_type(x) {}
+    explicit AnyType(bool x) : type_name(BOOL), bool_type(x) {}
+    explicit AnyType(const string &x) : type_name(STR), str_type(x) {}
+    explicit AnyType(const vector<AnyType> &x) : type_name(RETURN), return_type(x) {}
 
     AnyType &operator+=(const AnyType &other){
         return *this = *this + other;
@@ -202,45 +196,17 @@ public:
         if (type_name == INT) return AnyType((double)int_type);
         if (type_name == BOOL) return AnyType((double)bool_type);
         if (type_name == STR){
-            string context = str_type;
-            int len = context.length();
-            double prv = 0, suf = 0;
-            bool have_dot = false;
-            for (int i = 0; i < len; ++i){
-            	if (context[i] == '.') {have_dot = true; break;}
-            }
-            for (int i = (context[0] =='-' ? 1 : 0); i < len && context[i] != '.'; ++i)
-                prv = prv * 10 + context[i] - '0';
-            if (have_dot){
-		        for (int i = len - 1; context[i] != '.'; --i)
-		            suf = suf / 10 + context[i] - '0';
-			}
-            return AnyType((context[0] == '-' ? -1. : 1.) * (prv + suf / 10 + eps));
+			stringstream ss(str_type);
+			double ret;
+			ss >> ret;
+			return AnyType(ret);
         }
         return *this;
     }
 
     AnyType put2str() const{
         if (type_name == INT) return AnyType((string)int_type);
-        if (type_name == FLOAT){
-            double cur = abs(float_type);
-            string ret;
-            auto prv = (long long)cur;
-            double suf = cur - prv;
-            if (!prv) ret = '0';
-            for (; prv; prv /= 10)
-                ret = char(prv % 10 + '0') + ret;
-            ret += '.';
-            int precision = 1;
-            for (suf *= 10; abs(suf) > eps && precision <= 6; ++precision) {
-                auto tmp = (long long)(suf + eps);
-                ret += char(tmp + '0');
-                suf = (suf - tmp) * 10;
-            }
-            for (; precision <= 6; ++precision) ret += '0';
-            if (float_type < 0) ret = '-' + ret;
-            return AnyType(ret);
-        }
+        if (type_name == FLOAT) return AnyType(to_string(float_type));
         if (type_name == BOOL) return AnyType(bool_type ? string("True") : string("False"));
         if (type_name == NONE) return AnyType(string("None"));
         return *this;

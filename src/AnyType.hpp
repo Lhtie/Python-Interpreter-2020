@@ -215,7 +215,7 @@ public:
 		        for (int i = len - 1; context[i] != '.'; --i)
 		            suf = suf / 10 + context[i] - '0';
 			}
-            return AnyType((context[0] == '-' ? -1. : 1.) * (prv + suf / 10));
+            return AnyType((context[0] == '-' ? -1. : 1.) * (prv + suf / 10 + eps));
         }
         return *this;
     }
@@ -227,6 +227,7 @@ public:
             string ret;
             auto prv = (long long)cur;
             double suf = cur - prv;
+            if (!prv) ret = '0';
             for (; prv; prv /= 10)
                 ret = char(prv % 10 + '0') + ret;
             ret += '.';

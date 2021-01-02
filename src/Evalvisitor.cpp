@@ -413,7 +413,8 @@ antlrcpp::Any EvalVisitor::visitAtom(Python3Parser::AtomContext *ctx){
         string ret;
         for (int i = 0; i < size; ++i){
             string str = ctx->STRING(i)->getText();
-            for (int j = 1; str[j] != '"' && str[j] != '\''; ++j)
+            int len = str.length();
+            for (int j = 1; j < len - 1; ++j)
                 ret += str[j];
         }
         return AnyType(ret);

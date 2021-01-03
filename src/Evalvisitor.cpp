@@ -15,9 +15,10 @@ map<string, vector<AnyType> > parameters_value;
 AnyType True = AnyType(true), False = AnyType(false), None = AnyType(NONE);
 
 antlrcpp::Any EvalVisitor::visitFile_input(Python3Parser::File_inputContext *ctx){
-    int size = ctx->stmt().size();
+	auto stmt = ctx->stmt();
+    int size = stmt.size();
     for (int i = 0; i < size; ++i) {
-        visitStmt(ctx->stmt(i));
+        visitStmt(stmt[i]);
     }
     return None;
 }
@@ -37,13 +38,15 @@ antlrcpp::Any EvalVisitor::visitParameters(Python3Parser::ParametersContext *ctx
 }
 
 antlrcpp::Any EvalVisitor::visitTypedargslist(Python3Parser::TypedargslistContext *ctx){
-    int size1 = ctx->tfpdef().size(), size2 = ctx->test().size();
+	auto tfpdef = ctx->tfpdef();
+	auto test = ctx->test();
+    int size_tfpdef = tfpdef.size(), size_test = test.size();
     vector<string> x;
     vector<AnyType> y;
-    for (int i = 0; i < size1; ++i)
-        x.push_back(visitTfpdef(ctx->tfpdef(i)).as<string>());
-    for (int i = 0; i < size2; ++i) {
-        antlrcpp::Any res = visitTest(ctx->test(i));
+    for (int i = 0; i < size_tfpdef; ++i)
+        x.push_back(visitTfpdef(tfpdef[i]).as<string>());
+    for (int i = 0; i < size_test; ++i) {
+        auto res = visitTest(test[i]);
         if (res.is<string>()) res = data_manager[res.as<string>()];
         y.push_back(res.as<AnyType>());
     }
@@ -71,10 +74,12 @@ antlrcpp::Any EvalVisitor::visitSmall_stmt(Python3Parser::Small_stmtContext *ctx
 }
 
 antlrcpp::Any EvalVisitor::visitExpr_stmt(Python3Parser::Expr_stmtContext *ctx){
+	auto testlist = ctx->testlist();
+	int num = ctx->ASSIGN().size();
     if (ctx->augassign()){
         int type = visitAugassign(ctx->augassign());
-        auto l = visitTestlist(ctx->testlist(0)).as<vector<antlrcpp::Any> >();
-        auto r = visitTestlist(ctx->testlist(1)).as<vector<antlrcpp::Any> >();
+        auto l = visitTestlist(testlist[0]).as<vector<antlrcpp::Any> >();
+        auto r = visitTestlist(testlist[1]).as<vector<antlrcpp::Any> >();
         if (l.size() == r.size()) {
             for (int j = 0; j < l.size(); ++j) {
                 if (r[j].is<string>()) r[j] = data_manager[r[j].as<string>()];
@@ -87,11 +92,10 @@ antlrcpp::Any EvalVisitor::visitExpr_stmt(Python3Parser::Expr_stmtContext *ctx){
             }
         }
         return None;
-    } else if (!ctx->ASSIGN().empty()){
-        int num = ctx->ASSIGN().size();
+    } else if (num){
         for (int i = num; i >= 1; --i){
-            auto l = visitTestlist(ctx->testlist(i - 1)).as<vector<antlrcpp::Any> >();
-            auto r = visitTestlist(ctx->testlist(i)).as<vector<antlrcpp::Any> >();
+            auto l = visitTestlist(testlist[i-1]).as<vector<antlrcpp::Any> >();
+            auto r = visitTestlist(testlist[i]).as<vector<antlrcpp::Any> >();
             if (l.size() == r.size()) {
                 for (int j = 0; j < l.size(); ++j) {
                     if (r[j].is<string>()) r[j] = data_manager[r[j].as<string>()];
@@ -101,7 +105,7 @@ antlrcpp::Any EvalVisitor::visitExpr_stmt(Python3Parser::Expr_stmtContext *ctx){
         }
         return None;
     }
-    return visitTestlist(ctx->testlist(0)).as<vector<antlrcpp::Any> >()[0];
+    return visitTestlist(testlist[0]).as<vector<antlrcpp::Any> >()[0];
 }
 
 antlrcpp::Any EvalVisitor::visitAugassign(Python3Parser::AugassignContext *ctx){
@@ -150,27 +154,31 @@ antlrcpp::Any EvalVisitor::visitCompound_stmt(Python3Parser::Compound_stmtContex
 }
 
 antlrcpp::Any EvalVisitor::visitIf_stmt(Python3Parser::If_stmtContext *ctx){
-    int size_test = ctx->test().size(), size_suite = ctx->suite().size();
+	auto test = ctx->test();
+	auto suite = ctx->suite();
+    int size_test = test.size(), size_suite = suite.size();
     for (int i = 0; i < size_test; ++i){
-		auto res = visitTest(ctx->test(i));
+		auto res = visitTest(test[i]);
 		if (res.is<string>()) res = data_manager[res.as<string>()];
 		if (res.as<AnyType>()){
-			return visitSuite(ctx->suite(i));
+			return visitSuite(suite[i]);
 		}
 	}
-	if (ctx->ELSE()) return visitSuite(ctx->suite(size_suite - 1));
+	if (ctx->ELSE()) return visitSuite(*(suite.end() - 1));
     return None;
 }
 
 antlrcpp::Any EvalVisitor::visitWhile_stmt(Python3Parser::While_stmtContext *ctx){
-    auto Judger = visitTest(ctx->test());
+	auto test = ctx->test();
+	auto suite = ctx->suite();
+    auto Judger = visitTest(test);
     if (Judger.is<string>()) Judger = data_manager[Judger.as<string>()];
     while (Judger.as<AnyType>()) {
-        auto res = visitSuite(ctx->suite()).as<AnyType>();
+        auto res = visitSuite(suite).as<AnyType>();
         if (res == BREAK) break;
         if (res == CONTINUE) continue;
         if (res == RETURN) return res;
-        Judger = visitTest(ctx->test());
+        Judger = visitTest(test);
         if (Judger.is<string>()) Judger = data_manager[Judger.as<string>()];
     }
     return None;
@@ -179,9 +187,10 @@ antlrcpp::Any EvalVisitor::visitWhile_stmt(Python3Parser::While_stmtContext *ctx
 antlrcpp::Any EvalVisitor::visitSuite(Python3Parser::SuiteContext *ctx){
     if (ctx->simple_stmt())
         return visitSimple_stmt(ctx->simple_stmt());
-    int size = ctx->stmt().size();
+    auto stmt = ctx->stmt();
+    int size = stmt.size();
     for (int i = 0; i < size; ++i) {
-        auto res = visitStmt(ctx->stmt(i)).as<AnyType>();
+        auto res = visitStmt(stmt[i]).as<AnyType>();
         if (res == BREAK || res == CONTINUE || res == RETURN)
             return res;
     }
@@ -195,13 +204,14 @@ antlrcpp::Any EvalVisitor::visitTest(Python3Parser::TestContext *ctx){
 }
 
 antlrcpp::Any EvalVisitor::visitOr_test(Python3Parser::Or_testContext *ctx){
-    int size = ctx->and_test().size();
-    auto ret = visitAnd_test(ctx->and_test(0));
+	auto and_test = ctx->and_test();
+    int size = and_test.size();
+    auto ret = visitAnd_test(and_test[0]);
     if (size == 1) return ret;
     if (ret.is<string>()) ret = data_manager[ret.as<string>()];
     for (int i = 1; i < size; ++i){
     	if (ret.as<AnyType>()) break;
-        auto other = visitAnd_test(ctx->and_test(i));
+        auto other = visitAnd_test(and_test[i]);
         if (other.is<string>()) other = data_manager[other.as<string>()];
         ret = ret.as<AnyType>() | other.as<AnyType>();
     }
@@ -209,13 +219,14 @@ antlrcpp::Any EvalVisitor::visitOr_test(Python3Parser::Or_testContext *ctx){
 }
 
 antlrcpp::Any EvalVisitor::visitAnd_test(Python3Parser::And_testContext *ctx){
-	int size = ctx->not_test().size();
-	auto ret = visitNot_test(ctx->not_test(0));
+	auto not_test = ctx->not_test();
+	int size = not_test.size();
+	auto ret = visitNot_test(not_test[0]);
 	if (size == 1) return ret;
 	if (ret.is<string>()) ret = data_manager[ret.as<string>()];
 	for (int i = 1; i < size; ++i){
 		if (!ret.as<AnyType>()) break;
-		auto other = visitNot_test(ctx->not_test(i));
+		auto other = visitNot_test(not_test[i]);
 		if (other.is<string>()) other = data_manager[other.as<string>()];
 		ret = ret.as<AnyType>() & other.as<AnyType>();
 	}
@@ -231,15 +242,17 @@ antlrcpp::Any EvalVisitor::visitNot_test(Python3Parser::Not_testContext *ctx){
 }
 
 antlrcpp::Any EvalVisitor::visitComparison(Python3Parser::ComparisonContext *ctx){
-    int size = ctx->arith_expr().size();
-	auto prv = visitArith_expr(ctx->arith_expr(0));
+	auto arith_expr = ctx->arith_expr();
+	auto comp_op = ctx->comp_op();
+    int size = arith_expr.size();
+	auto prv = visitArith_expr(arith_expr[0]);
     if (size == 1) return prv;
     if (prv.is<string>()) prv = data_manager[prv.as<string>()];
     AnyType ret(true);
     for (int i = 1; i < size; ++i){
-        auto cur = visitArith_expr(ctx->arith_expr(i));
+        auto cur = visitArith_expr(arith_expr[i]);
         if (cur.is<string>()) cur = data_manager[cur.as<string>()];
-        int type = visitComp_op(ctx->comp_op(i - 1)).as<int>();
+        int type = visitComp_op(comp_op[i-1]).as<int>();
         if (type == 0) ret &= prv.as<AnyType>() < cur.as<AnyType>();
         if (type == 1) ret &= prv.as<AnyType>() > cur.as<AnyType>();
         if (type == 2) ret &= prv.as<AnyType>() == cur.as<AnyType>();
@@ -262,14 +275,16 @@ antlrcpp::Any EvalVisitor::visitComp_op(Python3Parser::Comp_opContext *ctx){
 }
 
 antlrcpp::Any EvalVisitor::visitArith_expr(Python3Parser::Arith_exprContext *ctx){
-    int size = ctx->term().size();
-    auto ret = visitTerm(ctx->term(0));
+	auto term = ctx->term();
+	auto addorsub_op = ctx->addorsub_op();
+    int size = term.size();
+    auto ret = visitTerm(term[0]);
     if (size == 1) return ret;
     if (ret.is<string>()) ret = data_manager[ret.as<string>()];
     for (int i = 1; i < size; ++i){
-        auto other = visitTerm(ctx->term(i));
+        auto other = visitTerm(term[i]);
         if (other.is<string>()) other = data_manager[other.as<string>()];
-        if (visitAddorsub_op(ctx->addorsub_op(i-1)).as<int>() == 0){
+        if (visitAddorsub_op(addorsub_op[i-1]).as<int>() == 0){
             ret = ret.as<AnyType>() + other.as<AnyType>();
         } else ret = ret.as<AnyType>() - other.as<AnyType>();
     }
@@ -282,14 +297,16 @@ antlrcpp::Any EvalVisitor::visitAddorsub_op(Python3Parser::Addorsub_opContext *c
 }
 
 antlrcpp::Any EvalVisitor::visitTerm(Python3Parser::TermContext *ctx){
-    int size = ctx->factor().size();
-    auto ret = visitFactor(ctx->factor(0));
+	auto factor = ctx->factor();
+	auto muldivmod_op = ctx->muldivmod_op();
+    int size = factor.size();
+    auto ret = visitFactor(factor[0]);
     if (size == 1) return ret;
     if (ret.is<string>()) ret = data_manager[ret.as<string>()];
     for (int i = 1; i < size; ++i){
-        auto other = visitFactor(ctx->factor(i));
+        auto other = visitFactor(factor[i]);
         if (other.is<string>()) other = data_manager[other.as<string>()];
-        int type = visitMuldivmod_op(ctx->muldivmod_op(i - 1)).as<int>();
+        int type = visitMuldivmod_op(muldivmod_op[i-1]).as<int>();
         if (type == 0) ret = ret.as<AnyType>() * other.as<AnyType>();
         if (type == 1) ret = ret.as<AnyType>() / other.as<AnyType>();
         if (type == 2) ret = div(ret.as<AnyType>(), other.as<AnyType>());
@@ -376,15 +393,15 @@ antlrcpp::Any EvalVisitor::visitAtom_expr(Python3Parser::Atom_exprContext *ctx){
 
 antlrcpp::Any EvalVisitor::visitTrailer(Python3Parser::TrailerContext *ctx){
     if (ctx->arglist())
-        return visitArglist(ctx->arglist());
+    	return visitArglist(ctx->arglist());
     return make_pair(vector<antlrcpp::Any>(), vector<AnyType>());
 }
 
 antlrcpp::Any EvalVisitor::visitAtom(Python3Parser::AtomContext *ctx){
-    if (ctx->NAME()) return ctx->NAME()->getText();
+    if (ctx->NAME()) return ctx->getText();
     if (ctx->NUMBER()){
         bool is_float = false;
-        string context = ctx->NUMBER()->getText();
+        string context = ctx->getText();
         int len = context.length();
         for (int i = 0; i < len; ++i)
             is_float |= context[i] == '.';
@@ -395,11 +412,12 @@ antlrcpp::Any EvalVisitor::visitAtom(Python3Parser::AtomContext *ctx){
     if (ctx->TRUE()) return True;
     if (ctx->FALSE()) return False;
     if (ctx->test()) return visitTest(ctx->test());
-    int size = ctx->STRING().size();
+    auto String = ctx->STRING();
+    int size = String.size();
     if (size){
         string ret;
         for (int i = 0; i < size; ++i){
-            string str = ctx->STRING(i)->getText();
+            string str = String[i]->getText();
             int len = str.length();
             for (int j = 1; j < len - 1; ++j)
                 ret += str[j];
@@ -410,10 +428,11 @@ antlrcpp::Any EvalVisitor::visitAtom(Python3Parser::AtomContext *ctx){
 }
 
 antlrcpp::Any EvalVisitor::visitTestlist(Python3Parser::TestlistContext *ctx){
-    int size = ctx->test().size();
+	auto test = ctx->test();
+    int size = test.size();
     vector<antlrcpp::Any> ret;
     for (int i = 0; i < size; ++i){
-        auto res = visitTest(ctx->test(i));
+        auto res = visitTest(test[i]);
         if (res.is<string>() || res.is<AnyType>())
             ret.push_back(res);
         else {
@@ -427,9 +446,10 @@ antlrcpp::Any EvalVisitor::visitTestlist(Python3Parser::TestlistContext *ctx){
 antlrcpp::Any EvalVisitor::visitArglist(Python3Parser::ArglistContext *ctx){
     vector<antlrcpp::Any> x;
     vector<AnyType> y;
-    int size = ctx->argument().size();
+    auto argument = ctx->argument();
+    int size = argument.size();
     for (int i = 0; i < size; ++i) {
-        auto res = visitArgument(ctx->argument(i));
+        auto res = visitArgument(argument[i]);
         if (res.is<pair<antlrcpp::Any, antlrcpp::Any> >()){
             auto t = res.as<pair<antlrcpp::Any, antlrcpp::Any> >();
             x.push_back(t.first);
@@ -441,7 +461,8 @@ antlrcpp::Any EvalVisitor::visitArglist(Python3Parser::ArglistContext *ctx){
 }
 
 antlrcpp::Any EvalVisitor::visitArgument(Python3Parser::ArgumentContext *ctx){
-    if (ctx->test().size() == 1)
-        return visitTest(ctx->test(0));
-    else return make_pair(visitTest(ctx->test(0)), visitTest(ctx->test(1)));
+	auto test = ctx->test();
+    if (test.size() == 1)
+        return visitTest(test[0]);
+    else return make_pair(visitTest(test[0]), visitTest(test[1]));
 }

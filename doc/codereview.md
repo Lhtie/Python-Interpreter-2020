@@ -33,7 +33,7 @@ Python-Interpreter-2020
   * `vector<int> stack0` 总栈，存每一次压栈的类型(`1 | 2`)
 * 进入函数体，把传入的参数压栈，进入`while | if`，压入一层空`map`；退出`suite`时弹栈
 * 对于`stack2`，先在栈顶查找，没有找到再查找`global`，没有则在栈顶新建
-* 对于`stack1`，从栈顶往下查找，知道查到`stack2`停止，最后查找`global`，没有则在栈顶新建
+* 对于`stack1`，从栈顶往下查找，直到查到`stack2`停止，最后查找`global`，没有则在栈顶新建
 
 ## `Evalvisitor.hpp`
 

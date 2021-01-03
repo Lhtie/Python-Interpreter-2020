@@ -155,37 +155,24 @@ antlrcpp::Any EvalVisitor::visitIf_stmt(Python3Parser::If_stmtContext *ctx){
 		auto res = visitTest(ctx->test(i));
 		if (res.is<string>()) res = data_manager[res.as<string>()];
 		if (res.as<AnyType>()){
-			data_manager.add_layer();
-			auto ret = visitSuite(ctx->suite(i)).as<AnyType>();
-			data_manager.del_layer();
-			return ret;
+			return visitSuite(ctx->suite(i));
 		}
 	}
-	if (ctx->ELSE()){
-		data_manager.add_layer();
-		auto res = visitSuite(ctx->suite(size_suite - 1)).as<AnyType>();
-        data_manager.del_layer();
-        return res;
-    }
+	if (ctx->ELSE()) return visitSuite(ctx->suite(size_suite - 1));
     return None;
 }
 
 antlrcpp::Any EvalVisitor::visitWhile_stmt(Python3Parser::While_stmtContext *ctx){
-    data_manager.add_layer();
     auto Judger = visitTest(ctx->test());
     if (Judger.is<string>()) Judger = data_manager[Judger.as<string>()];
     while (Judger.as<AnyType>()) {
         auto res = visitSuite(ctx->suite()).as<AnyType>();
         if (res == BREAK) break;
         if (res == CONTINUE) continue;
-        if (res == RETURN){
-        	data_manager.del_layer();
-        	return res;
-        }
+        if (res == RETURN) return res;
         Judger = visitTest(ctx->test());
         if (Judger.is<string>()) Judger = data_manager[Judger.as<string>()];
     }
-    data_manager.del_layer();
     return None;
 }
 

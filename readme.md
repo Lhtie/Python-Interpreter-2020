@@ -27,13 +27,10 @@ Python-Interpreter-2020
 
 * 实现对命名空间的统一管理
 * 成员变量
-  * `map<string, AnyType> global`
-  * `vector<map<string, AnyType> > stack1` 管理`while | if`的`suite`
-  * `vector<map<string, AnyType> > stack2` 管理自定义函数的`suite`
-  * `vector<int> stack0` 总栈，存每一次压栈的类型(`1 | 2`)
-* 进入函数体，把传入的参数压栈，进入`while | if`，压入一层空`map`；退出`suite`时弹栈
-* 对于`stack2`，先在栈顶查找，没有找到再查找`global`，没有则在栈顶新建
-* 对于`stack1`，从栈顶往下查找，直到查到`stack2`停止，最后查找`global`，没有则在栈顶新建
+  * `map<string, AnyType> global`全局变量存储池
+  * `vector<map<string, AnyType> > stack`手工栈空间
+* 进入函数体，把传入的参数放入新的一层`map`压栈；退出函数体时弹栈
+* **对于`while | if`的`suite`，只需要使用栈顶的命名空间**
 
 ## `Evalvisitor.hpp`
 
